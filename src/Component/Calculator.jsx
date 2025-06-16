@@ -2,88 +2,140 @@ import { useState } from "react";
 import "../Component/styles.css";
 
 function Calculator() {
-  const [operand1, setOperand1] = useState("");
-  const [operand2, setOperand2] = useState("");
-  const [operator, setOperator] = useState("+");
-  const [result, setResult] = useState("");
+  const [state, setState] = useState({
+    operand1: "",
+    operand2: "",
+    operator: "+",
+    result: "",
+  });
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
-  const handleOperand1Change = (e) => {
-    setOperand1(e.target.value);
-  };
-
-  const handleOperand2Change = (e) => {
-    setOperand2(e.target.value);
-  };
-
-  const handleOperatorChange = (e) => {
-    setOperator(e.target.value);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setState((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
   const calculateResult = () => {
-    const num1 = parseFloat(operand1);
-    const num2 = parseFloat(operand2);
+    const num1 = parseFloat(state.operand1);
+    const num2 = parseFloat(state.operand2);
 
     if (isNaN(num1) || isNaN(num2)) {
-      setResult("Invalid input");
+      setState((prevState) => ({
+        ...prevState,
+        result: "Invalid input",
+      }));
       return;
     }
 
-    let resultValue;
-    switch (operator) {
+    let calcResult;
+    switch (state.operator) {
       case "+":
-        resultValue = num1 + num2;
+        calcResult = num1 + num2;
         break;
       case "-":
-        resultValue = num1 - num2;
+        calcResult = num1 - num2;
         break;
       case "*":
-        resultValue = num1 * num2;
+        calcResult = num1 * num2;
         break;
       case "/":
-        if (num2 === 0) {
-          resultValue = "Cannot divide by zero";
-        } else {
-          resultValue = num1 / num2;
-        }
+        calcResult = num2 !== 0 ? num1 / num2 : "Cannot divide by zero";
         break;
       default:
-        resultValue = "Unknown operator";
+        calcResult = "Invalid operator";
     }
 
-    setResult(resultValue);
+    setState((prevState) => ({
+      ...prevState,
+      result: calcResult,
+    }));
+
+    setHistory((prevHistory) => [
+      ...prevHistory,
+      `${state.operand1} ${state.operator} ${state.operand2} = ${calcResult}`,
+    ]);
+  };
+
+  const resetCalculator = () => {
+    setState({
+      operand1: "",
+      operand2: "",
+      operator: "+",
+      result: "",
+    });
   };
 
   return (
-    <div className="calculator">
-      <input
-        type="number"
-        className="operand"
-        value={operand1}
-        onChange={handleOperand1Change}
-        placeholder="First number"
-      />
-      <select
-        value={operator}
-        className="operator"
-        onChange={handleOperatorChange}
-      >
-        <option value="+">+</option>
-        <option value="-">-</option>
-        <option value="*">*</option>
-        <option value="/">/</option>
-      </select>
-      <input
-        type="number"
-        className="operand"
-        value={operand2}
-        onChange={handleOperand2Change}
-        placeholder="Second number"
-      />
-      <button type="button" className="operator" onClick={calculateResult}>
-        =
-      </button>
-      <span className="result">{result}</span>
-    </div>
+    <>
+      <div className="calculator">
+        <div className="operand-row">
+          <div>
+            <input
+              type="number"
+              name="operand1"
+              value={state.operand1}
+              onChange={handleChange}
+              placeholder="Operand 1"
+              className="operand"
+            />
+            {state.error && <div className="error">{state.error}</div>}
+          </div>
+          <select
+            name="operator"
+            value={state.operator}
+            onChange={handleChange}
+            className="operator operator-dropdown"
+          >
+            <option value="+">+</option>
+            <option value="-">-</option>
+            <option value="*">*</option>
+            <option value="/">/</option>
+          </select>
+          <input
+            type="number"
+            name="operand2"
+            value={state.operand2}
+            onChange={handleChange}
+            placeholder="Operand 2"
+            className="operand"
+          />
+          <button onClick={calculateResult} className="operator">
+            Calculate
+          </button>
+        </div>
+        <div className="result-row">
+          <div className="result">Result: {state.result}</div>
+          <button onClick={resetCalculator} className="reset-button">
+            X
+          </button>
+        </div>
+        <button
+          onClick={() => {
+            if (history.length === 0) {
+              alert("No history to show");
+              return;
+            }
+            setShowHistory(!showHistory);
+          }}
+          className="toggle-history-button"
+        >
+          {showHistory ? "Hide History" : "Show History"}
+        </button>
+        {showHistory && (
+          <div className="history">
+            <ul>
+              {history.map((entry, index) => (
+                <li key={index}>{entry}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
